@@ -1,4 +1,4 @@
-/* Twin Peaks BirdNET. Palette, type and surface treatment adapted from
+/* Birds of Twin Peaks. Palette, type and surface treatment adapted from
    Avian Visitors by Teddy Warner (CC BY-NC-SA 4.0). */
 :root {
   color-scheme: light dark;
@@ -18,6 +18,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { background: var(--paper); }
 body {
   margin: 0; color: var(--ink); background: var(--paper);
@@ -32,22 +33,27 @@ a:hover { text-decoration-color: currentColor; }
 
 .head { text-align: center; padding: 72px 20px 8px; }
 .pre { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-soft); }
-h1 { font-weight: 400; font-size: clamp(40px, 8vw, 76px); line-height: 1.02; margin: 14px 0 12px; letter-spacing: -0.02em; text-wrap: balance; }
+.head h1 { font-weight: 400; font-size: clamp(40px, 8vw, 76px); line-height: 1.02; margin: 14px 0 12px; letter-spacing: -0.02em; text-wrap: balance; }
 .lede { max-width: 34em; margin: 0 auto; color: var(--ink-2); text-wrap: pretty; }
 
 main { max-width: 1120px; margin: 0 auto; padding: 0 20px 40px; }
-section { margin-top: 56px; }
+main > section { margin-top: 56px; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-h2 { font-weight: 400; font-size: 30px; margin: 0; letter-spacing: -0.01em; }
+.section-head h2 { font-weight: 400; font-size: 30px; margin: 0; letter-spacing: -0.01em; }
 .section-head .mono { font-size: 12px; }
 
-/* Collage: illustrations sized by how often each bird was heard. */
-.collage { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 6px 14px; padding: 8px 0 0; }
-.bird { all: unset; cursor: pointer; display: flex; flex-direction: column; align-items: center; width: var(--w); transform: rotate(var(--r)); transition: transform 240ms cubic-bezier(.22,1,.36,1); }
-.bird img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(26,22,18,0.12)); }
-.bird span { font-size: 13px; color: var(--ink-2); text-align: center; margin-top: 4px; line-height: 1.2; }
-.bird:hover, .bird:focus-visible { transform: rotate(0deg) translateY(-6px); }
-.bird:focus-visible, .row:focus-visible, .sp:focus-visible, .close:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 4px; border-radius: 8px; }
+/* Packed collage: positions are computed in app.js. */
+.collage.packed { position: relative; display: block; padding: 0; min-height: 200px; }
+.cbird { all: unset; position: absolute; cursor: pointer; animation: birdIn 520ms cubic-bezier(.22,1,.36,1) both; }
+.cbird img { width: 100%; height: 100%; display: block; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(26,22,18,0.14)); transition: transform 240ms cubic-bezier(.22,1,.36,1); }
+.cbird .ph { width: 100%; height: 100%; font-size: 34px; }
+.cbird:hover img, .cbird:focus-visible img { transform: translateY(-5px); }
+.cbird:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 4px; border-radius: 8px; }
+.clabel { position: absolute; white-space: nowrap; transform-origin: left center; font-family: Caveat, "Bradley Hand", "Segoe Print", cursive; color: var(--ink-soft); line-height: 1.1; pointer-events: none; }
+.cbird:hover .clabel, .cbird:focus-visible .clabel { color: var(--ink); }
+@keyframes birdIn { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+.row:focus-visible, .sp:focus-visible, .close:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 4px; border-radius: 8px; }
 .empty { text-align: center; color: var(--ink-soft); padding: 40px 0; }
 
 .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
@@ -56,10 +62,14 @@ h2 { font-weight: 400; font-size: 30px; margin: 0; letter-spacing: -0.01em; }
 .tile .value { font-size: 30px; line-height: 1.15; }
 .tile .sub { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
 
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-#map { height: 320px; border-radius: 10px; overflow: hidden; background: var(--paper-2); z-index: 0; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.split.three { grid-template-columns: 1fr 1fr 1fr; }
+.bottom { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.map-card { display: flex; flex-direction: column; }
+#map { flex: 1; min-height: 260px; border-radius: 10px; overflow: hidden; background: var(--paper-2); z-index: 0; }
 .leaflet-tile-pane { filter: grayscale(0.85) sepia(0.12) contrast(0.95); }
-.leaflet-container { font: inherit; background: var(--paper-2); }
+.leaflet-container { font: inherit; font-size: 12px; background: var(--paper-2); }
+.leaflet-container .leaflet-control-attribution { font-size: 10px; }
 .map-card p { margin: 10px 0 0; }
 
 .latest { list-style: none; margin: 0; padding: 0; max-height: 348px; overflow-y: auto; }
@@ -86,26 +96,132 @@ li:last-child .row { border-bottom: 0; }
 .sci { font-style: italic; color: var(--ink-soft); font-size: 14px; }
 .sp .n { font-size: 13px; color: var(--ink-2); }
 
-.about p { margin: 0 0 12px; max-width: 46em; color: var(--ink-2); }
+.about p { margin: 0 0 12px; color: var(--ink-2); }
 .about p:last-child { margin-bottom: 0; }
 .foot { max-width: 1120px; margin: 0 auto; padding: 24px 20px 60px; color: var(--ink-soft); line-height: 1.7; }
 .foot p { margin: 0 0 8px; max-width: 70em; }
 
-dialog { border: 0; border-radius: 18px; padding: 26px; width: min(560px, calc(100vw - 32px)); max-height: 84vh; background: var(--paper); color: var(--ink); box-shadow: var(--edge-lg); }
-dialog::backdrop { background: rgba(26,22,18,0.38); }
-.sheet-top { display: grid; grid-template-columns: 150px 1fr; gap: 18px; align-items: center; margin-bottom: 18px; }
-.sheet-top img { width: 150px; height: 150px; object-fit: contain; }
-dialog h3 { font-weight: 400; font-size: 30px; line-height: 1.1; margin: 0 0 4px; }
-.close { all: unset; cursor: pointer; float: right; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); padding: 4px; }
-dialog .latest { max-height: 40vh; }
-
+/* Species detail card: compact, after Avian Visitors' species modal. */
+dialog.detail { border: 0; padding: 7px; width: min(840px, calc(100vw - 24px)); height: min(560px, calc(100vh - 24px)); border-radius: 16px; background: var(--paper-2); color: var(--ink); box-shadow: var(--edge-lg); overflow: hidden; }
+dialog::backdrop { background: rgba(10,10,12,0.5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr); gap: 7px; height: 100%; }
+.d-card { background: var(--paper); border-radius: 11px; box-shadow: var(--edge-lg); padding: 14px 16px; }
+.d-side { display: flex; flex-direction: column; gap: 7px; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.d-art { position: relative; display: flex; flex-direction: column; min-height: 0; padding: 12px; }
+.detail .close { position: absolute; top: 10px; left: 12px; z-index: 3; font-size: 10px; padding: 4px 9px; border-radius: 999px; background: var(--paper-2); box-shadow: var(--edge); }
+.d-stage { flex: 1; min-height: 0; display: grid; place-items: center; border-radius: 10px; background: radial-gradient(circle at 50% 50%, var(--paper-2), transparent 58%); }
+.d-stage img { width: 72%; max-height: 300px; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(26,22,18,0.2)); }
+.d-art-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.d-pose { padding: 3px; }
+.d-pose button { padding: 3px 8px; }
+.d-pose img { width: 22px; height: 18px; object-fit: contain; display: block; opacity: 0.7; }
+.d-pose button[aria-pressed="true"] img { opacity: 1; }
+.d-links { display: flex; gap: 6px; margin-left: auto; }
+.d-chip { font-size: 10.5px; padding: 5px 10px; border-radius: 999px; box-shadow: var(--edge); background: var(--paper-2); text-decoration: none; color: var(--ink-2); }
+.d-chip:hover { color: var(--ink); }
+.d-head { display: flex; justify-content: space-between; gap: 12px; flex: none; }
+.d-head > div:first-child { display: flex; flex-direction: column; min-width: 0; }
+.d-head h3 { font-weight: 400; font-size: 26px; line-height: 1.05; letter-spacing: -0.015em; margin: 2px 0 3px; text-wrap: balance; }
+.d-head .sci { font-size: 12px; }
+.d-meta { margin-top: auto; padding-top: 10px; font-size: 10.5px; color: var(--ink-soft); white-space: pre-wrap; }
+.d-meta b { color: var(--ink); font-weight: 600; }
+.d-stamp { display: block; position: relative; flex: none; width: 58px; height: 76px; align-self: flex-start; }
+.d-stamp .stamp-fit { position: absolute; left: 50%; top: 50%; translate: -50% -50%; --fit-scale: 0.3; }
+.d-about { flex: none; }
+.d-about h4, .d-recs h4 { font-weight: 400; font-size: 18px; margin: 0 0 8px; }
+.d-about p { margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: var(--ink); }
+.d-facts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 14px; margin: 12px 0 10px; font-size: 10px; letter-spacing: 0; }
+.d-facts div { display: flex; gap: 5px; }
+.d-facts dt { color: var(--ink-soft); }
+.d-facts dd { margin: 0; font-weight: 600; }
+.d-about .d-marks { color: var(--ink-2); font-size: 12px; line-height: 1.5; }
+.d-about .d-credit { font-size: 9.5px; line-height: 1.4; color: var(--ink-soft); margin: 6px 0 0 !important; }
+.d-recs { flex: none; }
+.d-recs-head { display: flex; justify-content: space-between; align-items: baseline; }
+.d-recs-head h4 { margin: 0; }
+.d-recs-head span { text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; }
+.d-recs .latest { max-height: none; margin-top: 6px; }
+.d-recs .row { padding: 6px 2px; grid-template-columns: 26px 1fr auto; gap: 10px; }
+.d-recs .row .play { width: 24px; height: 24px; font-size: 9px; }
+.d-recs .row .name { font-size: 13px; }
+.d-recs .row .when { font-size: 10.5px; }
 @media (max-width: 760px) {
-  .head { padding-top: 48px; }
-  .tiles { grid-template-columns: 1fr 1fr; }
-  .split { grid-template-columns: 1fr; }
-  .sheet-top { grid-template-columns: 96px 1fr; }
-  .sheet-top img { width: 96px; height: 96px; }
-  section { margin-top: 40px; }
+  dialog.detail { height: auto; max-height: calc(100vh - 24px); overflow-y: auto; }
+  .detail-grid { grid-template-columns: 1fr; height: auto; }
+  .d-side { overflow: visible; }
+  .d-stage { min-height: 200px; }
+  .d-stage img { max-height: 200px; }
 }
-@media (prefers-reduced-motion: reduce) { .bird { transition: none; } }
-.bird .ph { width: 70%; aspect-ratio: 1; font-size: 34px; margin-bottom: 6px; }
+
+
+/* Window pills (top) and view switcher (bottom): shared segmented look. */
+.windows, .views-pick, .seg {
+  display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px;
+  background: var(--paper-2); box-shadow: var(--edge);
+}
+.windows button, .views-pick button, .seg button {
+  all: unset; cursor: pointer; padding: 7px 14px; border-radius: 999px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  transition: background 160ms, color 160ms;
+}
+.windows button:hover, .views-pick button:hover, .seg button:hover { color: var(--ink); }
+.windows button[aria-pressed="true"], .views-pick button[aria-pressed="true"], .seg button[aria-pressed="true"] {
+  background: var(--paper); color: var(--ink); box-shadow: var(--edge-lg);
+}
+.windows button:focus-visible, .views-pick button:focus-visible, .seg button:focus-visible,
+.rank-row:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 2px; }
+.windows { position: absolute; top: 24px; left: 24px; z-index: 5; }
+.views-pick {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 20;
+  background: color-mix(in srgb, var(--paper-2) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.views-pick button { padding: 9px 20px; }
+.seg button { padding: 6px 12px; font-size: 11px; }
+.window-note { margin: 14px 0 0; min-height: 1.5em; }
+.view { margin-top: 36px; }
+body.loading .view { opacity: 0.55; transition: opacity 200ms; }
+.foot { padding-bottom: 110px; }
+
+/* Stats: ranked lists. */
+.rank { list-style: none; margin: 0; padding: 0; }
+.rank-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; width: 100%; padding: 6px 2px; border-bottom: 1px solid var(--hairline); }
+.rank li:last-child .rank-row { border-bottom: 0; }
+.rank-row:hover .name { text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 3px; }
+.rank-row img, .rank-row .ph { width: 40px; height: 40px; object-fit: contain; }
+.rank-row .ph { font-size: 15px; }
+.rank-mid { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.rank-mid .name { font-size: 16px; line-height: 1.2; }
+.rank-bar { display: block; height: 3px; border-radius: 2px; background: var(--paper-3); }
+.rank-bar i { display: block; height: 100%; border-radius: 2px; background: var(--ink-2); }
+.rank-row .when { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+
+/* Atlas: stamp album. Stamp styling lives in stamps.css. */
+.atlas-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+#atlas { max-width: 1280px; margin: 0 auto; }
+.bird-card.stamp-card:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 3px; border-radius: 4px; }
+.fam-block .atlas-fam { display: flex; align-items: baseline; gap: 12px; font-weight: 400; font-size: 22px; margin: 0 0 12px; }
+.fam-block .atlas-fam i { flex: 1; height: 1px; background: var(--hairline); }
+.fam-block .atlas-fam em { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-style: normal; font-size: 12px; color: var(--ink-soft); }
+.fam-block + .fam-block { margin-top: 28px; }
+
+@media (max-width: 960px) {
+  .split.three { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .windows { position: static; display: flex; width: max-content; margin: 16px auto 0; }
+  .windows button { padding: 7px 11px; }
+  .views-pick { bottom: 14px; }
+  .views-pick button { padding: 9px 14px; }
+
+  .head { padding-top: 28px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile .value { font-size: 24px; }
+  .split { grid-template-columns: 1fr; }
+  .bottom { grid-template-columns: 1fr; }
+  main > section { margin-top: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .cbird { animation: none; } .cbird img, .windows button, .views-pick button { transition: none; } }
+
+.detail-grid:focus, .detail-grid:focus-visible { outline: none; }

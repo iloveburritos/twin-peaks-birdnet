@@ -1,11 +1,11 @@
-# Twin Peaks BirdNET
+# Birds of Twin Peaks
 
 A public bird log for the Twin Peaks area of San Francisco. A Raspberry Pi
 running [Avian Visitors](https://github.com/Twarner491/AvianVisitors) listens
 for birdsong; this project publishes what it hears.
 
 ```
-Raspberry Pi (home, private) --every 15 min, outbound only--> Cloudflare --> public site
+Raspberry Pi (home, private) --every 5 min, outbound only--> Cloudflare --> public site
 ```
 
 - `src/index.js` — Cloudflare Worker: permanent archive (D1 database + R2
@@ -19,9 +19,9 @@ Raspberry Pi (home, private) --every 15 min, outbound only--> Cloudflare --> pub
 - The Pi is never exposed to the internet. It only sends data out.
 - Sent: date, time, species, confidence, audio clip. Never sent:
   coordinates, settings, logs, live audio.
-- Detections go public 24 hours after they are heard
-  (`PUBLISH_DELAY_HOURS` in `wrangler.toml`), leaving time to delete false
-  positives on the Pi. Deletions on the Pi carry through to the archive.
+- Detections go public 15 minutes after they are heard
+  (`PUBLISH_DELAY_HOURS` in `wrangler.toml`), leaving a short window to
+  delete false positives on the Pi. Deletions on the Pi carry through to the archive.
 - Audio is published for all detections, including ones recorded before the
   uploader was installed. To publish audio only from a certain moment on, set
   `CLIPS_SINCE` (`YYYY-MM-DD HH:MM:SS`) in the uploader config on the Pi.

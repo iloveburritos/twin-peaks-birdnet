@@ -49,12 +49,12 @@ EOF
 
 sudo tee /etc/systemd/system/twinpeaks-uploader.timer >/dev/null <<EOF
 [Unit]
-Description=Run the Twin Peaks BirdNET uploader every 15 minutes
+Description=Run the Twin Peaks BirdNET uploader every 5 minutes
 
 [Timer]
 OnBootSec=5min
-OnUnitActiveSec=15min
-RandomizedDelaySec=60
+OnUnitActiveSec=5min
+RandomizedDelaySec=30
 
 [Install]
 WantedBy=timers.target

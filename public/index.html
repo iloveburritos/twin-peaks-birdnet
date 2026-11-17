@@ -3,91 +3,178 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Twin Peaks BirdNET</title>
-<meta name="description" content="Birds heard around Twin Peaks, San Francisco, identified by sound with BirdNET on a Raspberry Pi.">
+<title>Birds of Twin Peaks</title>
+<meta name="description" content="Latest birds heard in Twin Peaks, San Francisco, identified by sound with BirdNET on a Raspberry Pi.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Birds of Twin Peaks">
+<meta property="og:title" content="Birds of Twin Peaks · Latest birds heard in San Francisco">
+<meta property="og:description" content="Latest birds heard in Twin Peaks, San Francisco.">
+<meta property="og:url" content="https://twinpeaksbirds.com/">
+<meta property="og:image" content="https://twinpeaksbirds.com/og.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Illustrations of an Anna's Hummingbird, a California Scrub-Jay and a Chestnut-backed Chickadee.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Birds of Twin Peaks · Latest birds heard in San Francisco">
+<meta name="twitter:description" content="Latest birds heard in Twin Peaks, San Francisco.">
+<meta name="twitter:image" content="https://twinpeaksbirds.com/og.png?v=2">
 <link rel="icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="/stamps.css">
+<link rel="stylesheet" href="/stamp-batch-root.css">
+<link rel="stylesheet" href="/stamp-batch-a.css">
+<link rel="stylesheet" href="/stamp-batch-b.css">
+<link rel="stylesheet" href="/stamp-batch-c.css">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+<nav class="windows" id="windows" aria-label="Time window">
+  <button type="button" data-w="1h">1H</button>
+  <button type="button" data-w="12h">12H</button>
+  <button type="button" data-w="24h">24H</button>
+  <button type="button" data-w="7d">7D</button>
+  <button type="button" data-w="all">ALL</button>
+</nav>
+
 <header class="head">
   <div class="pre mono">Heard, not seen &middot; San Francisco</div>
-  <h1>Twin Peaks BirdNET</h1>
+  <h1>Birds of Twin Peaks</h1>
   <p class="lede" id="lede">A small microphone near Twin Peaks listens for birdsong around the clock and names what it hears.</p>
+  <p class="mono soft small window-note" id="window-note"></p>
 </header>
 
 <main>
-  <section class="collage-wrap" aria-labelledby="collage-title">
-    <div class="section-head">
-      <h2 id="collage-title">This week&rsquo;s visitors</h2>
-      <span class="mono soft" id="collage-note"></span>
-    </div>
-    <div class="collage" id="collage"></div>
-    <p class="empty" id="empty" hidden>No birds published yet. Detections appear here a day after they are heard, so check back tomorrow.</p>
+  <!-- Collage: illustrations sized by how often each bird was heard. -->
+  <section class="view" id="view-collage" aria-label="Collage">
+    <div class="collage packed" id="collage"></div>
+    <p class="empty" id="empty" hidden></p>
   </section>
 
-  <section class="tiles" id="tiles" aria-label="Station totals"></section>
+  <!-- Stats: totals, charts, rankings and the latest recordings. -->
+  <section class="view" id="view-stats" aria-label="Stats" hidden>
+    <div class="tiles" id="tiles"></div>
 
-  <section class="split">
+    <div class="split">
+      <div class="card">
+        <div class="label mono" id="timeline-label">Detections over time</div>
+        <div class="bars" id="timeline"></div>
+        <div class="axis mono soft small" id="timeline-axis"></div>
+      </div>
+      <div class="card">
+        <div class="label mono">Time of day</div>
+        <div class="bars hours" id="hourly"></div>
+        <div class="axis mono soft small"><span>12am</span><span>6am</span><span>noon</span><span>6pm</span><span>11pm</span></div>
+      </div>
+    </div>
+
+    <div class="split three">
+      <div class="card">
+        <div class="label mono">Top species</div>
+        <ol class="rank" id="top"></ol>
+      </div>
+      <div class="card">
+        <div class="label mono">First detections</div>
+        <ol class="rank" id="firsts"></ol>
+      </div>
+      <div class="card">
+        <div class="label mono">Latest</div>
+        <ol class="latest" id="latest"></ol>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Atlas: every species printed as a stamp, its design set by family. -->
+  <section class="view" id="view-atlas" aria-label="Atlas" hidden>
+    <div class="atlas-bar">
+      <span class="mono soft small" id="atlas-note"></span>
+      <div class="seg" id="atlas-sort" role="group" aria-label="Sort stamps">
+        <button type="button" data-sort="life">Life list</button>
+        <button type="button" data-sort="family">Family</button>
+        <button type="button" data-sort="alpha">A–Z</button>
+        <button type="button" data-sort="count">Most heard</button>
+      </div>
+    </div>
+    <div class="atlas-grid" id="atlas"></div>
+  </section>
+
+  <!-- Shown under every view. -->
+  <section class="bottom">
+    <div class="about card">
+      <div class="label mono">About</div>
+      <p>This station is a Raspberry Pi with a USB microphone. It records short stretches of sound, and the BirdNET model from the Cornell Lab of Ornithology suggests which species is singing. Identification by sound is imperfect, so treat each entry as a good guess.</p>
+      <p>Detections are published about 15 minutes after they are heard. Recordings pass through a human-voice filter, and anything that turns out not to be a bird is removed.</p>
+      <p>The data is open: <a href="/api/export.csv">download every detection as CSV</a>. Recordings are linked from each row.</p>
+    </div>
     <div class="card map-card">
       <div class="label mono">Where</div>
       <div id="map" role="img" aria-label="Map of the Twin Peaks area of San Francisco"></div>
       <p class="mono soft small">Approximate listening area. The exact spot is not published.</p>
     </div>
-    <div class="card">
-      <div class="label mono">Latest</div>
-      <ol class="latest" id="latest"></ol>
-    </div>
-  </section>
-
-  <section class="split">
-    <div class="card">
-      <div class="label mono">Detections per day</div>
-      <div class="bars" id="daily"></div>
-    </div>
-    <div class="card">
-      <div class="label mono">Time of day</div>
-      <div class="bars hours" id="hourly"></div>
-      <div class="axis mono soft small"><span>12am</span><span>6am</span><span>noon</span><span>6pm</span><span>11pm</span></div>
-    </div>
-  </section>
-
-  <section aria-labelledby="species-title">
-    <div class="section-head">
-      <h2 id="species-title">Every species so far</h2>
-      <span class="mono soft" id="species-note"></span>
-    </div>
-    <div class="species" id="species"></div>
-  </section>
-
-  <section class="about card">
-    <div class="label mono">About</div>
-    <p>This station is a Raspberry Pi with a USB microphone. It records short stretches of sound, and the BirdNET model from the Cornell Lab of Ornithology suggests which species is singing. Identification by sound is imperfect, so treat each entry as a good guess.</p>
-    <p>Detections are published a day after they are heard. Recordings pass through a human-voice filter, and anything that turns out not to be a bird is removed.</p>
-    <p>The data is open: <a href="/api/export.csv">download every detection as CSV</a>. Recordings are linked from each row.</p>
   </section>
 </main>
 
 <footer class="foot mono small">
-  <p>Built on <a href="https://github.com/Twarner491/AvianVisitors">Avian Visitors</a> by Teddy Warner, whose design and bird illustrations this site adapts, on <a href="https://github.com/Nachtzuster/BirdNET-Pi">BirdNET-Pi</a> by Patrick McGuire and contributors, and on <a href="https://birdnet.cornell.edu/">BirdNET</a> from the K. Lisa Yang Center for Conservation Bioacoustics, Cornell Lab of Ornithology.</p>
+  <p>Built on <a href="https://github.com/Twarner491/AvianVisitors">Avian Visitors</a> by Teddy Warner, whose design, views and bird illustrations this site adapts, on <a href="https://github.com/Nachtzuster/BirdNET-Pi">BirdNET-Pi</a> by Patrick McGuire and contributors, and on <a href="https://birdnet.cornell.edu/">BirdNET</a> from the K. Lisa Yang Center for Conservation Bioacoustics, Cornell Lab of Ornithology.</p>
   <p>Non-commercial. Site, code and data shared under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. <a id="source-link" href="#">Source code</a>.</p>
 </footer>
 
-<dialog id="sheet" aria-labelledby="sheet-name">
+<nav class="views-pick" id="views-pick" aria-label="View">
+  <button type="button" data-view="collage">Collage</button>
+  <button type="button" data-view="stats">Stats</button>
+  <button type="button" data-view="atlas">Atlas</button>
+</nav>
+
+<dialog id="sheet" class="detail" aria-labelledby="sheet-name">
   <button class="close mono" id="sheet-close" aria-label="Close">Close</button>
-  <div class="sheet-top">
-    <img id="sheet-img" alt="">
-    <div>
-      <h3 id="sheet-name"></h3>
-      <div class="sci" id="sheet-sci"></div>
-      <div class="mono soft small" id="sheet-meta"></div>
+  <div class="detail-grid" tabindex="-1" autofocus>
+    <div class="d-card d-art">
+      <div class="d-stage"><img id="sheet-img" alt=""></div>
+      <div class="d-art-foot">
+        <div class="seg d-pose" id="sheet-pose" role="group" aria-label="Illustration pose" hidden>
+          <button type="button" data-pose="1" aria-label="Perched"><img alt="" id="pose-1"></button>
+          <button type="button" data-pose="2" aria-label="In flight"><img alt="" id="pose-2"></button>
+        </div>
+        <span class="d-links mono">
+          <a class="d-chip" id="sheet-wiki" target="_blank" rel="noopener">Wikipedia ↗</a>
+          <a class="d-chip" id="sheet-ebird" target="_blank" rel="noopener">eBird ↗</a>
+        </span>
+      </div>
+    </div>
+    <div class="d-side">
+      <div class="d-card d-head">
+        <div>
+          <h3 id="sheet-name"></h3>
+          <div class="sci" id="sheet-sci"></div>
+          <div class="d-meta mono" id="sheet-meta"></div>
+        </div>
+        <div class="d-stamp atlas-grid" id="sheet-stamp" aria-hidden="true"></div>
+      </div>
+      <div class="d-card d-about">
+        <h4>About</h4>
+        <div id="sheet-about"></div>
+        <dl class="d-facts mono" id="sheet-facts"></dl>
+        <p class="d-marks" id="sheet-marks" hidden></p>
+        <p class="d-credit mono" id="sheet-credit" hidden></p>
+      </div>
+      <div class="d-card d-recs">
+        <div class="d-recs-head"><h4>Recordings</h4><span class="mono soft small" id="sheet-count"></span></div>
+        <ol class="latest" id="sheet-list"></ol>
+      </div>
     </div>
   </div>
-  <div class="label mono">Recordings</div>
-  <ol class="latest" id="sheet-list"></ol>
 </dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- Stamp designs from Avian Visitors by Teddy Warner (CC BY-NC-SA 4.0), unchanged. -->
+<script src="/stamps.js"></script>
+<script src="/stamp-batch-root.js"></script>
+<script src="/stamp-batch-a.js"></script>
+<script src="/stamp-batch-b.js"></script>
+<script src="/stamp-batch-c.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

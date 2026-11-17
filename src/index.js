@@ -8,6 +8,9 @@
 // Bindings (wrangler.toml): DB (D1), CLIPS (R2), ASSETS (static site)
 // Vars: PUBLISH_DELAY_HOURS, STATION_NAME.  Secret: INGEST_TOKEN
 
+import { speciesAbout } from './wiki.js';
+import EBIRD from './ebird-codes.json';
+
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS detections (
@@ -149,14 +152,83 @@ async function summary(env) {
   const hours = new Array(24).fill(0);
   for (const h of hourly.results) if (h.hour >= 0 && h.hour < 24) hours[h.hour] = h.n;
   return json({
-    station: env.STATION_NAME || 'Twin Peaks BirdNET',
+    station: env.STATION_NAME || 'Birds of Twin Peaks',
     delay_hours: Number(env.PUBLISH_DELAY_HOURS ?? 24),
     totals: totals.results[0] || {},
     recent: recent.results.map(publicRow),
     species: species.results.map((s) => ({ ...s, slug: slugify(s.sci), img: `/birds/${slugify(s.sci)}.webp` })),
     daily: daily.results.reverse(),
     hourly: hours,
-  }, 200, { 'cache-control': 'public, max-age=300' });
+  }, 200, { 'cache-control': 'public, max-age=60' });
+}
+
+// Time windows the site can show. `bucket` sets the timeline resolution in
+// seconds; 'day' groups by the Pi's local calendar date instead.
+const WINDOWS = {
+  '1h': { secs: 3600, bucket: 300 },
+  '12h': { secs: 43200, bucket: 3600 },
+  '24h': { secs: 86400, bucket: 3600 },
+  '7d': { secs: 604800, bucket: 'day' },
+  all: { secs: null, bucket: 'day' },
+};
+
+async function windowView(env, url) {
+  const key = url.searchParams.get('w') || '24h';
+  const win = WINDOWS[key];
+  if (!win) return json({ error: 'bad window' }, 400);
+  const c = cutoff(env);
+  const now = Math.floor(Date.now() / 1000);
+  const start = win.secs ? now - win.secs : 0;
+  const bucketSql = win.bucket === 'day'
+    ? `SELECT date AS b, COUNT(*) AS n, COUNT(DISTINCT sci) AS species
+         FROM detections WHERE ts > ?1 AND ts <= ?2 GROUP BY date ORDER BY date`
+    : `SELECT CAST((ts - CAST(?1 AS INTEGER)) / ${win.bucket} AS INTEGER) AS b, COUNT(*) AS n, COUNT(DISTINCT sci) AS species
+         FROM detections WHERE ts > ?1 AND ts <= ?2 GROUP BY b ORDER BY b`;
+  const [species, clips, recent, buckets, hourly] = await env.DB.batch([
+    // Every species ever heard, with its count inside this window.
+    env.DB.prepare(
+      `SELECT sci, MAX(com) AS com, COUNT(*) AS n_all,
+              SUM(CASE WHEN ts > ?1 THEN 1 ELSE 0 END) AS n,
+              MAX(ts) AS last_ts, MIN(date) AS first_date, MIN(ts) AS first_ts,
+              MAX(conf) AS best_conf
+         FROM detections WHERE ts <= ?2 GROUP BY sci`).bind(start, c),
+    // Best-scoring recording per species (SQLite returns the MAX row's file).
+    env.DB.prepare(
+      `SELECT sci, file, MAX(conf) AS conf FROM detections
+        WHERE has_clip = 1 AND ts <= ?1 GROUP BY sci`).bind(c),
+    env.DB.prepare(
+      `SELECT * FROM detections WHERE ts > ?1 AND ts <= ?2
+        ORDER BY ts DESC LIMIT 40`).bind(start, c),
+    env.DB.prepare(bucketSql).bind(start, c),
+    env.DB.prepare(
+      `SELECT CAST(substr(time, 1, 2) AS INTEGER) AS hour, COUNT(*) AS n
+         FROM detections WHERE ts > ?1 AND ts <= ?2 GROUP BY hour`).bind(start, c),
+  ]);
+  const clipBySci = {};
+  for (const r of clips.results) clipBySci[r.sci] = `/clips/${encodeURIComponent(r.file)}`;
+  const hours = new Array(24).fill(0);
+  for (const h of hourly.results) if (h.hour >= 0 && h.hour < 24) hours[h.hour] = h.n;
+  const list = species.results.map((s) => ({
+    ...s, slug: slugify(s.sci), img: `/birds/${slugify(s.sci)}.webp`, clip: clipBySci[s.sci] || null,
+  }));
+  const inWindow = list.filter((s) => s.n > 0);
+  return json({
+    station: env.STATION_NAME || 'Birds of Twin Peaks',
+    delay_hours: Number(env.PUBLISH_DELAY_HOURS ?? 24),
+    window: key,
+    start, cutoff: c, bucket: win.bucket,
+    totals: {
+      detections: inWindow.reduce((a, s) => a + s.n, 0),
+      species: inWindow.length,
+      all_detections: list.reduce((a, s) => a + s.n_all, 0),
+      all_species: list.length,
+      first_date: list.reduce((m, s) => (!m || s.first_date < m ? s.first_date : m), null),
+    },
+    species: list,
+    recent: recent.results.map(publicRow),
+    timeline: buckets.results,
+    hourly: hours,
+  }, 200, { 'cache-control': 'public, max-age=60' });
 }
 
 async function speciesDetail(env, url) {
@@ -167,6 +239,31 @@ async function speciesDetail(env, url) {
       ORDER BY has_clip DESC, conf DESC, ts DESC LIMIT 60`).bind(sci, cutoff(env)).all();
   return json({ sci, detections: rows.results.map(publicRow) }, 200,
     { 'cache-control': 'public, max-age=300' });
+}
+
+// Wikipedia description + eBird code for one species, cached at the edge for
+// a week so Wikipedia is asked at most once per species per week.
+async function about(request, env, ctx, url) {
+  const sci = (url.searchParams.get('sci') || '').trim();
+  if (!/^[A-Za-z]{2,40}(?: [a-z]{2,40}){1,3}$/.test(sci)) return json({ error: 'invalid sci' }, 400);
+  const cache = caches.default;
+  const key = new Request(`https://cache.internal/about/v1/${encodeURIComponent(sci)}`);
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  let body;
+  try {
+    body = await speciesAbout(sci);
+  } catch (err) {
+    console.error(err);
+    return json({ sci, ebird: EBIRD[sci] || null, paragraphs: [], distinctive: null, source: null }, 200,
+      { 'cache-control': 'public, max-age=300' });
+  }
+  const res = json({ sci, ebird: EBIRD[sci] || null, ...body }, 200,
+    { 'cache-control': 'public, max-age=86400' });
+  ctx.waitUntil(cache.put(key, new Response(res.clone().body, {
+    headers: { ...JSON_HEADERS, 'cache-control': 'public, max-age=604800' },
+  })));
+  return res;
 }
 
 async function exportCsv(env) {
@@ -220,7 +317,7 @@ async function serveObject(request, env, key, cacheControl) {
 // ---------------------------------------------------------------- router
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     try {
@@ -229,7 +326,9 @@ export default {
       }
       if (request.method === 'GET' || request.method === 'HEAD') {
         if (path === '/api/summary') return summary(env);
+        if (path === '/api/window') return windowView(env, url);
         if (path === '/api/species') return speciesDetail(env, url);
+        if (path === '/api/about') return about(request, env, ctx, url);
         if (path === '/api/export.csv') return exportCsv(env);
         if (path.startsWith('/clips/')) return serveClip(request, env, decodeURIComponent(path.slice(7)));
       } else if (path.startsWith('/api/')) {

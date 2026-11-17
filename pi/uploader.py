@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Twin Peaks BirdNET - Pi uploader.
 
-Runs every 15 minutes on the Raspberry Pi. It only makes OUTBOUND HTTPS
+Runs every 5 minutes on the Raspberry Pi. It only makes OUTBOUND HTTPS
 requests to the public archive; nothing connects in to the Pi.
 
 What it sends:  date, time, scientific name, common name, confidence, and

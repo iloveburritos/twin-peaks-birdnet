@@ -8,10 +8,11 @@ binding = "ASSETS"
 run_worker_first = ["/api/*", "/clips/*"]
 
 [vars]
-STATION_NAME = "Twin Peaks BirdNET"
+STATION_NAME = "Birds of Twin Peaks"
 # Hours a detection waits before it appears publicly, so false positives
-# can be deleted on the Pi first. Set to "0" to publish immediately.
-PUBLISH_DELAY_HOURS = "24"
+# can be deleted on the Pi first. "0.25" is 15 minutes; "0" publishes
+# immediately.
+PUBLISH_DELAY_HOURS = "0.25"
 
 [[d1_databases]]
 binding = "DB"
