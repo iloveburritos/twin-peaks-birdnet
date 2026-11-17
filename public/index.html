@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twin Peaks BirdNET</title>
+<meta name="description" content="Birds heard around Twin Peaks, San Francisco, identified by sound with BirdNET on a Raspberry Pi.">
+<link rel="icon" href="/favicon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="head">
+  <div class="pre mono">Heard, not seen &middot; San Francisco</div>
+  <h1>Twin Peaks BirdNET</h1>
+  <p class="lede" id="lede">A small microphone near Twin Peaks listens for birdsong around the clock and names what it hears.</p>
+</header>
+
+<main>
+  <section class="collage-wrap" aria-labelledby="collage-title">
+    <div class="section-head">
+      <h2 id="collage-title">This week&rsquo;s visitors</h2>
+      <span class="mono soft" id="collage-note"></span>
+    </div>
+    <div class="collage" id="collage"></div>
+    <p class="empty" id="empty" hidden>No birds published yet. Detections appear here a day after they are heard, so check back tomorrow.</p>
+  </section>
+
+  <section class="tiles" id="tiles" aria-label="Station totals"></section>
+
+  <section class="split">
+    <div class="card map-card">
+      <div class="label mono">Where</div>
+      <div id="map" role="img" aria-label="Map of the Twin Peaks area of San Francisco"></div>
+      <p class="mono soft small">Approximate listening area. The exact spot is not published.</p>
+    </div>
+    <div class="card">
+      <div class="label mono">Latest</div>
+      <ol class="latest" id="latest"></ol>
+    </div>
+  </section>
+
+  <section class="split">
+    <div class="card">
+      <div class="label mono">Detections per day</div>
+      <div class="bars" id="daily"></div>
+    </div>
+    <div class="card">
+      <div class="label mono">Time of day</div>
+      <div class="bars hours" id="hourly"></div>
+      <div class="axis mono soft small"><span>12am</span><span>6am</span><span>noon</span><span>6pm</span><span>11pm</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="species-title">
+    <div class="section-head">
+      <h2 id="species-title">Every species so far</h2>
+      <span class="mono soft" id="species-note"></span>
+    </div>
+    <div class="species" id="species"></div>
+  </section>
+
+  <section class="about card">
+    <div class="label mono">About</div>
+    <p>This station is a Raspberry Pi with a USB microphone. It records short stretches of sound, and the BirdNET model from the Cornell Lab of Ornithology suggests which species is singing. Identification by sound is imperfect, so treat each entry as a good guess.</p>
+    <p>Detections are published a day after they are heard. Recordings pass through a human-voice filter, and anything that turns out not to be a bird is removed.</p>
+    <p>The data is open: <a href="/api/export.csv">download every detection as CSV</a>. Recordings are linked from each row.</p>
+  </section>
+</main>
+
+<footer class="foot mono small">
+  <p>Built on <a href="https://github.com/Twarner491/AvianVisitors">Avian Visitors</a> by Teddy Warner, whose design and bird illustrations this site adapts, on <a href="https://github.com/Nachtzuster/BirdNET-Pi">BirdNET-Pi</a> by Patrick McGuire and contributors, and on <a href="https://birdnet.cornell.edu/">BirdNET</a> from the K. Lisa Yang Center for Conservation Bioacoustics, Cornell Lab of Ornithology.</p>
+  <p>Non-commercial. Site, code and data shared under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. <a id="source-link" href="#">Source code</a>.</p>
+</footer>
+
+<dialog id="sheet" aria-labelledby="sheet-name">
+  <button class="close mono" id="sheet-close" aria-label="Close">Close</button>
+  <div class="sheet-top">
+    <img id="sheet-img" alt="">
+    <div>
+      <h3 id="sheet-name"></h3>
+      <div class="sci" id="sheet-sci"></div>
+      <div class="mono soft small" id="sheet-meta"></div>
+    </div>
+  </div>
+  <div class="label mono">Recordings</div>
+  <ol class="latest" id="sheet-list"></ol>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+/* Twin Peaks BirdNET. Palette, type and surface treatment adapted from
+   Avian Visitors by Teddy Warner (CC BY-NC-SA 4.0). */
+:root {
+  color-scheme: light dark;
+  --paper: #fcfcfb; --paper-2: #f3f2ee; --paper-3: #e8e6df;
+  --ink: #1a1612; --ink-2: #4a3f31; --ink-soft: #908576;
+  --hairline: rgba(26,22,18,0.14);
+  --edge: inset 0 0 0 1px rgba(255,255,255,0.55), 0 0 0 1px rgba(26,22,18,0.06);
+  --edge-lg: inset 0 0 0 1px rgba(255,255,255,0.6), 0 0 0 1px rgba(26,22,18,0.06), 0 8px 28px rgba(26,22,18,0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #17181c; --paper-2: #212329; --paper-3: #2c2f36;
+    --ink: #ece8e1; --ink-2: #b7afa2; --ink-soft: #837c70;
+    --hairline: rgba(236,232,225,0.20);
+    --edge: inset 0 0 0 1px rgba(255,255,255,0.05), 0 0 0 1px rgba(0,0,0,0.4);
+    --edge-lg: inset 0 0 0 1px rgba(255,255,255,0.06), 0 0 0 1px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0; color: var(--ink); background: var(--paper);
+  font-family: ui-serif, "Iowan Old Style", "Apple Garamond", Georgia, serif;
+  font-size: 18px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.02em; }
+.soft { color: var(--ink-soft); }
+.small { font-size: 12px; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--hairline); }
+a:hover { text-decoration-color: currentColor; }
+
+.head { text-align: center; padding: 72px 20px 8px; }
+.pre { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-weight: 400; font-size: clamp(40px, 8vw, 76px); line-height: 1.02; margin: 14px 0 12px; letter-spacing: -0.02em; text-wrap: balance; }
+.lede { max-width: 34em; margin: 0 auto; color: var(--ink-2); text-wrap: pretty; }
+
+main { max-width: 1120px; margin: 0 auto; padding: 0 20px 40px; }
+section { margin-top: 56px; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+h2 { font-weight: 400; font-size: 30px; margin: 0; letter-spacing: -0.01em; }
+.section-head .mono { font-size: 12px; }
+
+/* Collage: illustrations sized by how often each bird was heard. */
+.collage { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 6px 14px; padding: 8px 0 0; }
+.bird { all: unset; cursor: pointer; display: flex; flex-direction: column; align-items: center; width: var(--w); transform: rotate(var(--r)); transition: transform 240ms cubic-bezier(.22,1,.36,1); }
+.bird img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(26,22,18,0.12)); }
+.bird span { font-size: 13px; color: var(--ink-2); text-align: center; margin-top: 4px; line-height: 1.2; }
+.bird:hover, .bird:focus-visible { transform: rotate(0deg) translateY(-6px); }
+.bird:focus-visible, .row:focus-visible, .sp:focus-visible, .close:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 4px; border-radius: 8px; }
+.empty { text-align: center; color: var(--ink-soft); padding: 40px 0; }
+
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.tile, .card { background: var(--paper); border-radius: 14px; box-shadow: var(--edge-lg); padding: 18px 20px; }
+.label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; }
+.tile .value { font-size: 30px; line-height: 1.15; }
+.tile .sub { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+#map { height: 320px; border-radius: 10px; overflow: hidden; background: var(--paper-2); z-index: 0; }
+.leaflet-tile-pane { filter: grayscale(0.85) sepia(0.12) contrast(0.95); }
+.leaflet-container { font: inherit; background: var(--paper-2); }
+.map-card p { margin: 10px 0 0; }
+
+.latest { list-style: none; margin: 0; padding: 0; max-height: 348px; overflow-y: auto; }
+.row { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; width: 100%; padding: 9px 4px; border-bottom: 1px solid var(--hairline); cursor: pointer; }
+li:last-child .row { border-bottom: 0; }
+.row .play { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; box-shadow: var(--edge); background: var(--paper-2); font-size: 11px; color: var(--ink-2); }
+.row.noclip { cursor: default; }
+.row.noclip .play { opacity: 0.35; }
+.row.playing .play { background: var(--ink); color: var(--paper); }
+.row .name { line-height: 1.25; }
+.row .when { font-size: 12px; color: var(--ink-soft); text-align: right; white-space: nowrap; }
+
+.bars { display: flex; align-items: flex-end; gap: 3px; height: 150px; }
+.bars div { flex: 1; min-height: 2px; background: var(--ink-2); border-radius: 2px 2px 0 0; opacity: 0.85; }
+.bars div:hover { opacity: 1; background: var(--ink); }
+.axis { display: flex; justify-content: space-between; margin-top: 6px; }
+
+.species { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.sp { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; box-shadow: var(--edge); background: var(--paper); }
+.sp:hover { background: var(--paper-2); }
+.sp img, .sp .ph { width: 64px; height: 64px; object-fit: contain; }
+.ph { display: grid; place-items: center; background: var(--paper-2); border-radius: 50%; color: var(--ink-soft); font-size: 22px; }
+.sp .name { line-height: 1.2; }
+.sci { font-style: italic; color: var(--ink-soft); font-size: 14px; }
+.sp .n { font-size: 13px; color: var(--ink-2); }
+
+.about p { margin: 0 0 12px; max-width: 46em; color: var(--ink-2); }
+.about p:last-child { margin-bottom: 0; }
+.foot { max-width: 1120px; margin: 0 auto; padding: 24px 20px 60px; color: var(--ink-soft); line-height: 1.7; }
+.foot p { margin: 0 0 8px; max-width: 70em; }
+
+dialog { border: 0; border-radius: 18px; padding: 26px; width: min(560px, calc(100vw - 32px)); max-height: 84vh; background: var(--paper); color: var(--ink); box-shadow: var(--edge-lg); }
+dialog::backdrop { background: rgba(26,22,18,0.38); }
+.sheet-top { display: grid; grid-template-columns: 150px 1fr; gap: 18px; align-items: center; margin-bottom: 18px; }
+.sheet-top img { width: 150px; height: 150px; object-fit: contain; }
+dialog h3 { font-weight: 400; font-size: 30px; line-height: 1.1; margin: 0 0 4px; }
+.close { all: unset; cursor: pointer; float: right; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); padding: 4px; }
+dialog .latest { max-height: 40vh; }
+
+@media (max-width: 760px) {
+  .head { padding-top: 48px; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .split { grid-template-columns: 1fr; }
+  .sheet-top { grid-template-columns: 96px 1fr; }
+  .sheet-top img { width: 96px; height: 96px; }
+  section { margin-top: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .bird { transition: none; } }
+.bird .ph { width: 70%; aspect-ratio: 1; font-size: 34px; margin-bottom: 6px; }
