@@ -25,7 +25,18 @@ const SCHEMA = [
    )`,
   `CREATE INDEX IF NOT EXISTS detections_ts ON detections (ts DESC)`,
   `CREATE INDEX IF NOT EXISTS detections_sci ON detections (sci, ts DESC)`,
+  `CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v INTEGER)`,
 ];
+
+// The Pi checks in every 5 minutes. If it has been silent this long, the
+// site says the station is offline.
+const OFFLINE_AFTER_SECS = 30 * 60;
+
+function markSeen(env) {
+  return env.DB.prepare(
+    `INSERT INTO meta (k, v) VALUES ('last_seen', ?1)
+       ON CONFLICT(k) DO UPDATE SET v = excluded.v`).bind(Math.floor(Date.now() / 1000)).run();
+}
 
 let schemaReady = false;
 async function ensureSchema(env) {
@@ -184,7 +195,7 @@ async function windowView(env, url) {
          FROM detections WHERE ts > ?1 AND ts <= ?2 GROUP BY date ORDER BY date`
     : `SELECT CAST((ts - CAST(?1 AS INTEGER)) / ${win.bucket} AS INTEGER) AS b, COUNT(*) AS n, COUNT(DISTINCT sci) AS species
          FROM detections WHERE ts > ?1 AND ts <= ?2 GROUP BY b ORDER BY b`;
-  const [species, clips, recent, buckets, hourly] = await env.DB.batch([
+  const [species, clips, recent, buckets, hourly, seen] = await env.DB.batch([
     // Every species ever heard, with its count inside this window.
     env.DB.prepare(
       `SELECT sci, MAX(com) AS com, COUNT(*) AS n_all,
@@ -203,7 +214,10 @@ async function windowView(env, url) {
     env.DB.prepare(
       `SELECT CAST(substr(time, 1, 2) AS INTEGER) AS hour, COUNT(*) AS n
          FROM detections WHERE ts > ?1 AND ts <= ?2 GROUP BY hour`).bind(start, c),
+    env.DB.prepare(`SELECT v FROM meta WHERE k = 'last_seen'`),
   ]);
+  // null until the Pi has checked in at least once (older uploaders don't).
+  const lastSeen = seen.results[0] ? seen.results[0].v : null;
   const clipBySci = {};
   for (const r of clips.results) clipBySci[r.sci] = `/clips/${encodeURIComponent(r.file)}`;
   const hours = new Array(24).fill(0);
@@ -217,6 +231,7 @@ async function windowView(env, url) {
     delay_hours: Number(env.PUBLISH_DELAY_HOURS ?? 24),
     window: key,
     start, cutoff: c, bucket: win.bucket,
+    online: lastSeen === null ? null : now - lastSeen < OFFLINE_AFTER_SECS,
     totals: {
       detections: inWindow.reduce((a, s) => a + s.n, 0),
       species: inWindow.length,
@@ -333,6 +348,8 @@ export default {
         if (path.startsWith('/clips/')) return serveClip(request, env, decodeURIComponent(path.slice(7)));
       } else if (path.startsWith('/api/')) {
         if (!(await authorized(request, env))) return json({ error: 'unauthorized' }, 401);
+        ctx.waitUntil(markSeen(env));
+        if (request.method === 'POST' && path === '/api/heartbeat') return json({ ok: true });
         if (request.method === 'POST' && path === '/api/ingest') return ingest(request, env);
         if (request.method === 'PUT' && path === '/api/clip') return putClip(request, env, url);
         if (request.method === 'POST' && path === '/api/delete') return removeDetections(request, env);

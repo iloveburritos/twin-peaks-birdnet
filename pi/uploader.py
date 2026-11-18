@@ -73,6 +73,8 @@ def find_clip(date, file_name):
 
 def main():
     conf = load_conf()
+    # Tell the site the station is up, so it can show when it's offline.
+    call(conf, "POST", "/api/heartbeat", b"{}")
     window = int(conf["WINDOW_DAYS"])
     since_date = time.strftime("%Y-%m-%d", time.localtime(time.time() - window * 86400))
     clips_since = to_epoch(*conf["CLIPS_SINCE"].split(" ", 1)) if conf["CLIPS_SINCE"] else 0

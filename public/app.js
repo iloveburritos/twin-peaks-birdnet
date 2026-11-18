@@ -411,8 +411,11 @@
     var heard = inWindow(data);
     var pool = heard.slice(0, 24);
     var empty = $('empty');
-    empty.hidden = pool.length > 0;
-    if (!pool.length) {
+    // The Pi has stopped checking in: show the empty nest instead.
+    var offline = data.online === false;
+    $('offline').hidden = !offline;
+    empty.hidden = offline || pool.length > 0;
+    if (offline || !pool.length) {
       empty.textContent = data.totals.all_species
         ? 'No birds heard in ' + WINDOWS[data.window].long + '. Detections appear about 15 minutes after they are heard.'
         : 'No birds published yet. Check back soon.';

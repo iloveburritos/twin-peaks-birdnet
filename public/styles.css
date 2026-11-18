@@ -55,6 +55,9 @@ main > section { margin-top: 56px; }
 
 .row:focus-visible, .sp:focus-visible, .close:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 4px; border-radius: 8px; }
 .empty { text-align: center; color: var(--ink-soft); padding: 40px 0; }
+.offline { text-align: center; padding: 24px 20px 48px; }
+.offline img { width: min(360px, 70vw); height: auto; display: block; margin: 0 auto 8px; }
+.offline p { margin: 0; font-family: Caveat, "Bradley Hand", "Segoe Print", cursive; font-size: 30px; color: var(--ink-2); }
 
 .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .tile, .card { background: var(--paper); border-radius: 14px; box-shadow: var(--edge-lg); padding: 18px 20px; }
