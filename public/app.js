@@ -4,9 +4,9 @@
   'use strict';
 
   var SOURCE_URL = 'https://github.com/iloveburritos/twin-peaks-birdnet';
-  // General area only (ZIP 94131, south of the Twin Peaks summit) -
-  // deliberately not the station's location.
-  var AREA = { lat: 37.7425, lon: -122.4430, radius: 1300 };
+  // General area only: the east slope of Twin Peaks, between the summit
+  // and Market St. Deliberately loose, not the station's exact location.
+  var AREA = { lat: 37.7532, lon: -122.4452, radius: 350 };
   var TZ = 'America/Los_Angeles';
   var REFRESH_MS = 2 * 60 * 1000;
 
@@ -582,14 +582,14 @@
   function ensureMap() {
     if (map || !window.L) { if (map) map.invalidateSize(); return; }
     map = L.map('map', { scrollWheelZoom: false, zoomControl: true, attributionControl: true })
-      .setView([AREA.lat, AREA.lon], 13);
+      .setView([AREA.lat, AREA.lon], 15);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 16,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
     L.circle([AREA.lat, AREA.lon], {
       radius: AREA.radius, color: '#4a3f31', weight: 1.5, fillColor: '#4a3f31', fillOpacity: 0.14,
-    }).addTo(map).bindTooltip('Twin Peaks · 94131', { permanent: true, direction: 'top', className: 'mono' });
+    }).addTo(map).bindTooltip('Twin Peaks', { permanent: true, direction: 'top', className: 'mono' });
   }
 
   // --------------------------------------------------------------- atlas
