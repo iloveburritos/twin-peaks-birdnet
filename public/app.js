@@ -411,10 +411,11 @@
     var heard = inWindow(data);
     var pool = heard.slice(0, 24);
     var empty = $('empty');
-    // Station offline (the Pi stopped checking in) or no birds in this
-    // window: show the empty nest instead of the collage.
+    // No birds in this window: show the empty nest instead of the collage.
+    // If the Pi has also stopped checking in, the nest says it's offline.
+    // Windows that still have birds show them even while offline.
     var offline = data.online === false;
-    var showNest = offline || !pool.length;
+    var showNest = !pool.length;
     $('nest').hidden = !showNest;
     $('collage').hidden = showNest;
     empty.hidden = true;
