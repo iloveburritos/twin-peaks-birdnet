@@ -249,10 +249,25 @@ async function windowView(env, url) {
 async function speciesDetail(env, url) {
   const sci = url.searchParams.get('sci') || '';
   if (!sci || sci.length > 100) return json({ error: 'bad species' }, 400);
-  const rows = await env.DB.prepare(
-    `SELECT * FROM detections WHERE sci = ?1 AND ts <= ?2
-      ORDER BY has_clip DESC, conf DESC, ts DESC LIMIT 60`).bind(sci, cutoff(env)).all();
-  return json({ sci, detections: rows.results.map(publicRow) }, 200,
+  // Newest first, a page at a time; `offset` fetches the next page.
+  const PAGE = 100;
+  const offset = Math.max(0, Math.floor(Number(url.searchParams.get('offset')) || 0));
+  const c = cutoff(env);
+  const [rows, count] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT * FROM detections WHERE sci = ?1 AND ts <= ?2
+        ORDER BY ts DESC, file LIMIT ?3 OFFSET ?4`).bind(sci, c, PAGE + 1, offset),
+    env.DB.prepare(
+      `SELECT COUNT(*) AS n, SUM(has_clip) AS clips FROM detections
+        WHERE sci = ?1 AND ts <= ?2`).bind(sci, c),
+  ]);
+  const page = rows.results.slice(0, PAGE);
+  const totals = count.results[0] || {};
+  return json({
+    sci, detections: page.map(publicRow),
+    total: totals.n || 0, clips: totals.clips || 0,
+    next: rows.results.length > PAGE ? offset + PAGE : null,
+  }, 200,
     { 'cache-control': 'public, max-age=300' });
 }
 

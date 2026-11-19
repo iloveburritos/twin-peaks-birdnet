@@ -242,18 +242,37 @@
     list.replaceChildren(el('li', 'soft small mono', 'Loading…'));
     if (!$('sheet').open) $('sheet').showModal();
     $('sheet').scrollTop = 0;
-    fetch('/api/species?sci=' + encodeURIComponent(s.sci))
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (sheetFor !== s.sci) return;
-        var withClip = data.detections.filter(function (d) { return d.clip; }).length;
-        $('sheet-count').textContent = plural(withClip, 'recording');
-        list.replaceChildren.apply(list, data.detections.map(function (d) {
-          d.com = s.com;
-          return detectionRow(d, false);
-        }));
-      })
-      .catch(function () { list.replaceChildren(el('li', 'soft', 'Could not load recordings.')); });
+    // Recordings arrive newest first, 100 at a time, with "Show more".
+    function loadPage(offset) {
+      return fetch('/api/species?sci=' + encodeURIComponent(s.sci) + (offset ? '&offset=' + offset : ''))
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (data) {
+          if (sheetFor !== s.sci) return;
+          $('sheet-count').textContent = plural(data.clips, 'recording');
+          var rows = data.detections.map(function (d) {
+            d.com = s.com;
+            return detectionRow(d, false);
+          });
+          if (data.next != null) {
+            var li = el('li', 'more-row');
+            var btn = el('button', 'more mono', 'Show more');
+            btn.type = 'button';
+            btn.addEventListener('click', function () {
+              btn.disabled = true;
+              btn.textContent = 'Loading\u2026';
+              loadPage(data.next).then(function () { li.remove(); }, function () {
+                btn.disabled = false;
+                btn.textContent = 'Show more';
+              });
+            });
+            li.appendChild(btn);
+            rows.push(li);
+          }
+          if (offset) list.append.apply(list, rows);
+          else list.replaceChildren.apply(list, rows);
+        });
+    }
+    loadPage(0).catch(function () { list.replaceChildren(el('li', 'soft', 'Could not load recordings.')); });
   }
 
   function renderBars(target, values, labels) {

@@ -146,6 +146,16 @@ dialog::backdrop { background: rgba(10,10,12,0.5); -webkit-backdrop-filter: blur
 .d-recs-head h4 { margin: 0; }
 .d-recs-head span { text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; }
 .d-recs .latest { max-height: none; margin-top: 6px; }
+.more-row { list-style: none; text-align: center; padding: 14px 0 4px; }
+.more {
+  all: unset; cursor: pointer; padding: 8px 16px; border-radius: 999px; font-size: 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  background: var(--paper-2); box-shadow: var(--edge);
+}
+.more:hover { color: var(--ink); }
+.more:focus-visible { outline: 2px solid var(--ink-2); outline-offset: 2px; }
+.more:disabled { cursor: default; opacity: 0.6; }
 .d-recs .row { padding: 6px 2px; grid-template-columns: 26px 1fr auto; gap: 10px; }
 .d-recs .row .play { width: 24px; height: 24px; font-size: 9px; }
 .d-recs .row .name { font-size: 13px; }
